@@ -84,9 +84,11 @@ if (rendererSource.includes('ut({kind:"analyze-screen",triggeredUsingShortcut:e,
 if (!rendererSource.includes('children:"Regenerate"') || !rendererSource.includes('kind:"regenerate"')) {
   throw new Error("The local Regenerate control is missing.");
 }
-if (!rendererSource.includes('onClear:Ye,onAnswer:()=>ut({kind:"ai-help",triggeredUsingShortcut:!1})') ||
+if (!rendererSource.includes('w.default,{callSession:t,combinedTranscript:He') ||
+    !rendererSource.includes('onClear:R,onAnswer:ee,listeningIndicator:I') ||
+    !rendererSource.includes('onClick:ee,className:"font-normal",children:"Answer"') ||
     !rendererSource.includes('onClick:Se,className:"font-normal",children:"Answer"')) {
-  throw new Error("The compact transcript manual Answer control is missing.");
+  throw new Error("The transcript manual Answer controls are missing.");
 }
 const backendSource = fs.readFileSync(path.join(root, "scripts/local-backend.cjs"), "utf8");
 if (!backendSource.includes("gpt-5.6-terra") || !backendSource.includes("gpt-live-transcribe")) {
