@@ -7,3 +7,4 @@ release/
 *.log
 *.tmp
 cache-backups/
+exports/
