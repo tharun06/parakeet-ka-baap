@@ -1,0 +1,7 @@
+{
+  "name": "parakeetai-desktop",
+  "version": "3.9.9",
+  "description": "ParakeetAI Desktop App",
+  "author": "ParakeetAI",
+  "main": "./local-bootstrap.cjs"
+}

@@ -1,0 +1,9 @@
+node_modules/
+local-data/
+release/
+.env
+.env.*
+!.env.example
+*.log
+*.tmp
+cache-backups/

@@ -1,0 +1,21 @@
+{
+  "name": "parakeetai-3.9.9-recovered-runner",
+  "version": "3.9.9",
+  "private": true,
+  "description": "Development-mode runner for the recovered ParakeetAI Desktop 3.9.9 bundle",
+  "scripts": {
+    "build:portable": "node scripts/build-portable.cjs",
+    "prestart": "node scripts/check-platform.cjs",
+    "start": "node scripts/start-local.cjs",
+    "start:upstream": "electron ./app",
+    "local:server": "node scripts/local-backend.cjs",
+    "verify": "node scripts/verify-project.cjs"
+  },
+  "devDependencies": {
+    "electron": "38.8.6"
+  },
+  "dependencies": {
+    "mammoth": "^1.8.0",
+    "pdf-parse": "^1.1.1"
+  }
+}
