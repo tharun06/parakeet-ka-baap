@@ -25,6 +25,7 @@ fs.renameSync(electronExecutable, localExecutable);
 fs.mkdirSync(path.join(packagedRoot, "scripts"), { recursive: true });
 fs.cpSync(path.join(root, "app"), path.join(packagedRoot, "app"), { recursive: true });
 fs.copyFileSync(path.join(root, "scripts", "local-backend.cjs"), path.join(packagedRoot, "scripts", "local-backend.cjs"));
+fs.copyFileSync(path.join(root, "scripts", "question-grouping.cjs"), path.join(packagedRoot, "scripts", "question-grouping.cjs"));
 
 const rootNodeModules = path.join(root, "node_modules");
 const packagedNodeModules = path.join(packagedRoot, "node_modules");

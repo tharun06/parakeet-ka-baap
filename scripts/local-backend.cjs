@@ -5,6 +5,7 @@ const { randomUUID } = require("node:crypto");
 const pdfParse = require("pdf-parse");
 const mammoth = require("mammoth");
 const { WebSocket, WebSocketServer } = require("../app/node_modules/ws");
+const { groupRecentTranscriptEntries } = require("./question-grouping.cjs");
 
 const host = "127.0.0.1";
 const port = Number(process.env.PARAKEET_LOCAL_PORT || 3000);
@@ -384,7 +385,13 @@ function writeUiEvent(res, event) {
 function collectQuestion(body) {
   const direct = (body?.trigger?.parts || []).filter(part => part?.type === "text").map(part => part.text).join("\n").trim();
   if (direct) return direct;
-  return (body?.pendingTranscriptEntries || []).map(entry => entry?.content || entry?.partialContent || "").filter(Boolean).join(" ").trim();
+  const savedEntries = transcripts.get(String(body?.callSessionId || "")) || [];
+  const groupedQuestion = groupRecentTranscriptEntries(savedEntries, body?.pendingTranscriptEntries || [])
+    .map(entry => entry.content)
+    .join("\n")
+    .trim();
+  if (!groupedQuestion) return "";
+  return `The transcript lines below are consecutive fragments of the interviewer's current question. Combine them into one complete question, then answer every named concept and every requested part:\n\n${groupedQuestion}`;
 }
 
 function collectImages(body) {

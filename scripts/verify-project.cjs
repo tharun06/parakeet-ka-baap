@@ -1,5 +1,6 @@
 const fs = require("node:fs");
 const path = require("node:path");
+const { groupRecentTranscriptEntries } = require("./question-grouping.cjs");
 
 const root = path.resolve(__dirname, "..");
 const requiredFiles = [
@@ -13,6 +14,7 @@ const requiredFiles = [
   "app/dist/renderer/renderer.js",
   "app/assets/icons/512x512.png",
   "app/node_modules/@parakeetai-desktop/native-modules/prebuilt/parakeetai-native.win32-x64-msvc.node",
+  "scripts/question-grouping.cjs",
 ];
 
 const missing = requiredFiles.filter((file) => !fs.existsSync(path.join(root, file)));
@@ -113,6 +115,23 @@ if (!backendSource.includes("replayableChatRequests") || !backendSource.includes
 }
 if (!backendSource.includes("sound like a real person speaking naturally in an interview") || !backendSource.includes("Do not use headings, bullet lists, bold labels")) {
   throw new Error("The natural spoken-answer prompt is missing.");
+}
+if (!backendSource.includes("groupRecentTranscriptEntries") ||
+    !backendSource.includes("answer every named concept and every requested part")) {
+  throw new Error("The multipart transcript question handling is missing.");
+}
+
+const groupedQuestion = groupRecentTranscriptEntries([
+  { id: "old", type: "share", content: "What is Flask?", createdAt: "2026-08-06T15:23:00.000Z" },
+  { id: "one", type: "share", content: "What is the difference between fine-tuning", createdAt: "2026-08-06T15:23:22.734Z" },
+  { id: "two", type: "share", content: "Prompt engineering", createdAt: "2026-08-06T15:23:25.565Z" },
+], [
+  { id: "three", type: "share", content: "And RAG", createdAt: "2026-08-06T15:23:26.532Z" },
+  { id: "three", type: "share", content: "And RAG", createdAt: "2026-08-06T15:23:26.532Z" },
+]);
+if (groupedQuestion.map(entry => entry.content).join(" | ") !==
+    "What is the difference between fine-tuning | Prompt engineering | And RAG") {
+  throw new Error("Multipart transcript grouping does not preserve the complete recent question.");
 }
 
 console.log("Recovered app structure and runtime patches are valid.");
