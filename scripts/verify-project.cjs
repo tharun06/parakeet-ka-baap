@@ -84,6 +84,10 @@ if (rendererSource.includes('ut({kind:"analyze-screen",triggeredUsingShortcut:e,
 if (!rendererSource.includes('children:"Regenerate"') || !rendererSource.includes('kind:"regenerate"')) {
   throw new Error("The local Regenerate control is missing.");
 }
+if (!rendererSource.includes('onClear:Ye,onAnswer:()=>ut({kind:"ai-help",triggeredUsingShortcut:!1})') ||
+    !rendererSource.includes('onClick:Se,className:"font-normal",children:"Answer"')) {
+  throw new Error("The compact transcript manual Answer control is missing.");
+}
 const backendSource = fs.readFileSync(path.join(root, "scripts/local-backend.cjs"), "utf8");
 if (!backendSource.includes("gpt-5.6-terra") || !backendSource.includes("gpt-live-transcribe")) {
   throw new Error("The OpenAI answer/transcription integration is missing.");

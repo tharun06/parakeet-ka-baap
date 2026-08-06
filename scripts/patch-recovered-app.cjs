@@ -65,9 +65,14 @@ if (source.includes(incorrectlySkippedIpcInitialization)) {
 }
 const unconditionalUpdaterInitialization = '(0,p.default)(),(0,O.registerDisplayListeners)()';
 const localSafeUpdaterInitialization = 'process.env.PARAKEET_LOCAL_ONLY?0:(0,p.default)(),(0,O.registerDisplayListeners)()';
-if (source.includes(unconditionalUpdaterInitialization)) {
+const duplicatedLocalUpdaterInitialization = 'process.env.PARAKEET_LOCAL_ONLY?0:process.env.PARAKEET_LOCAL_ONLY?0:(0,p.default)(),(0,O.registerDisplayListeners)()';
+if (source.includes(duplicatedLocalUpdaterInitialization)) {
+  source = source.replace(duplicatedLocalUpdaterInitialization, localSafeUpdaterInitialization);
+} else if (source.includes(localSafeUpdaterInitialization)) {
+  // Already patched.
+} else if (source.includes(unconditionalUpdaterInitialization)) {
   source = source.replace(unconditionalUpdaterInitialization, localSafeUpdaterInitialization);
-} else if (!source.includes(localSafeUpdaterInitialization)) {
+} else {
   throw new Error("Could not disable official updates in the packaged local app");
 }
 const packagedLoginStartup = 'l.app.isPackaged&&l.app.setLoginItemSettings({openAtLogin:!0,args:t.isWindows?["--was-opened-at-login"]:void 0})';
@@ -182,6 +187,31 @@ if (rendererSource.includes(answerAndScreenshotButtons)) {
   rendererSource = rendererSource.replace(answerAndScreenshotButtons, answerRegenerateAndScreenshotButtons);
 } else if (!rendererSource.includes(answerRegenerateAndScreenshotButtons)) {
   throw new Error("Could not add the Regenerate button");
+}
+const immediateAutoAnswer = 'X.current=e=>{R?.autoAnswer&&!e&&se.generateAiResponse({kind:"auto-ai-help"})}';
+if (!rendererSource.includes(immediateAutoAnswer)) {
+  throw new Error("Could not preserve the original Auto Answer timing");
+}
+const compactTranscriptStart = '},46866(e,t,n){"use strict";var r=this&&this.__importDefault||function(e){return e&&e.__esModule?e:{default:e}};Object.defineProperty(t,"__esModule",{value:!0}),t.default=function(e){const t=(0,o.c)(26),{combinedTranscript:n,isMicrophoneTranscribing:r,isShareTranscribing:g,width:_,listeningIndicator:v,onUnMinimize:b,onClear:y}=e;';
+const compactTranscriptWithAnswerStart = '},46866(e,t,n){"use strict";var r=this&&this.__importDefault||function(e){return e&&e.__esModule?e:{default:e}};Object.defineProperty(t,"__esModule",{value:!0}),t.default=function(e){const t=(0,o.c)(27),{combinedTranscript:n,isMicrophoneTranscribing:r,isShareTranscribing:g,width:_,listeningIndicator:v,onUnMinimize:b,onClear:y,onAnswer:Se}=e;';
+if (rendererSource.includes(compactTranscriptStart)) {
+  rendererSource = rendererSource.replace(compactTranscriptStart, compactTranscriptWithAnswerStart);
+} else if (!rendererSource.includes(compactTranscriptWithAnswerStart)) {
+  throw new Error("Could not expose a manual Answer action in the compact transcript");
+}
+const compactTranscriptControls = 't[18]!==N||t[19]!==w?(A=(0,i.jsxs)("div",{"data-transparent":"true",className:"flex h-full flex-row items-center gap-1",children:[C,w,N]}),t[18]=N,t[19]=w,t[20]=A):A=t[20],t[21]!==S||t[22]!==A||t[23]!==E||t[24]!==T?(k=(0,i.jsxs)(f.default,{className:"flex flex-row items-center justify-between gap-1 transition-[width] duration-200 ease-out motion-reduce:transition-none",style:S,children:[E,T,A]}),t[21]=S,t[22]=A,t[23]=E,t[24]=T,t[25]=k):k=t[25]';
+const compactTranscriptControlsWithAnswer = 't[18]!==N||t[19]!==w||t[20]!==Se?(A=(0,i.jsxs)("div",{"data-transparent":"true",className:"flex h-full flex-row items-center gap-1",children:[C,(0,i.jsx)(u.default,{transparent:!0,onClick:Se,className:"font-normal",children:"Answer"}),w,N]}),t[18]=N,t[19]=w,t[20]=Se,t[21]=A):A=t[21],t[22]!==S||t[23]!==A||t[24]!==E||t[25]!==T?(k=(0,i.jsxs)(f.default,{className:"flex flex-row items-center justify-between gap-1 transition-[width] duration-200 ease-out motion-reduce:transition-none",style:S,children:[E,T,A]}),t[22]=S,t[23]=A,t[24]=E,t[25]=T,t[26]=k):k=t[26]';
+if (rendererSource.includes(compactTranscriptControls)) {
+  rendererSource = rendererSource.replace(compactTranscriptControls, compactTranscriptControlsWithAnswer);
+} else if (!rendererSource.includes(compactTranscriptControlsWithAnswer)) {
+  throw new Error("Could not add the compact transcript Answer button");
+}
+const compactTranscriptUsage = 'Z&&k&&(0,l.jsx)(L.default,{combinedTranscript:He,isMicrophoneTranscribing:we,isShareTranscribing:be,width:At??void 0,listeningIndicator:Lt,onUnMinimize:()=>ee(!1),onClear:Ye})';
+const compactTranscriptUsageWithAnswer = 'Z&&k&&(0,l.jsx)(L.default,{combinedTranscript:He,isMicrophoneTranscribing:we,isShareTranscribing:be,width:At??void 0,listeningIndicator:Lt,onUnMinimize:()=>ee(!1),onClear:Ye,onAnswer:()=>ut({kind:"ai-help",triggeredUsingShortcut:!1})})';
+if (rendererSource.includes(compactTranscriptUsage)) {
+  rendererSource = rendererSource.replace(compactTranscriptUsage, compactTranscriptUsageWithAnswer);
+} else if (!rendererSource.includes(compactTranscriptUsageWithAnswer)) {
+  throw new Error("Could not connect the compact transcript Answer button");
 }
 
 fs.writeFileSync(rendererPath, rendererSource);
