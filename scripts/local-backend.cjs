@@ -49,6 +49,9 @@ for (const savedSession of savedLibrary.sessions) {
   const session = { ...savedSession };
   for (const field of dateFields) if (session[field]) session[field] = new Date(session[field]);
   sessions.set(session.id, session);
+  if (session.metadata?.previousInterviewerQuestion) {
+    previousInterviewerQuestions.set(session.id, session.metadata.previousInterviewerQuestion);
+  }
 }
 for (const [callSessionId, savedRows] of Object.entries(savedLibrary.transcripts)) {
   transcripts.set(callSessionId, Array.isArray(savedRows)
@@ -398,27 +401,31 @@ function collectTranscriptQuestion(body, sourceType) {
   return questionEntries.map(entry => entry.content).join("\n").trim();
 }
 
-function markTranscriptAnswered(body) {
+function markTranscriptAnswered(body, previousQuestion) {
   const callSessionId = String(body?.callSessionId || "");
   const session = sessions.get(callSessionId);
   const transcriptBoundaryAt = body?.trigger?.transcriptBoundaryAt;
   if (["ai-help", "auto-ai-help", "follow-up"].includes(body?.trigger?.kind) && session && transcriptBoundaryAt) {
-    session.metadata = { ...(session.metadata || {}), transcriptAnsweredAt: transcriptBoundaryAt };
+    const metadata = { ...(session.metadata || {}), transcriptAnsweredAt: transcriptBoundaryAt };
+    if (previousQuestion === null) delete metadata.previousInterviewerQuestion;
+    else if (previousQuestion) metadata.previousInterviewerQuestion = previousQuestion;
+    session.metadata = metadata;
     session.updatedAt = new Date();
     persistLibrary();
   }
+  if (previousQuestion === null) previousInterviewerQuestions.delete(callSessionId);
+  else if (previousQuestion) previousInterviewerQuestions.set(callSessionId, previousQuestion);
 }
 
 function collectQuestion(body) {
   const direct = (body?.trigger?.parts || []).filter(part => part?.type === "text").map(part => part.text).join("\n").trim();
   const groupedQuestion = collectTranscriptQuestion(body);
   if (direct) return { question: direct, systemAudioQuestion: "" };
-  const systemAudioQuestion = collectTranscriptQuestion(body, "share");
   return {
     question: groupedQuestion
       ? `The transcript lines below are consecutive fragments of the interviewer's current question. Combine them into one complete question, then answer every named concept and every requested part:\n\n${groupedQuestion}`
       : "",
-    systemAudioQuestion: groupedQuestion === systemAudioQuestion ? systemAudioQuestion : "",
+    systemAudioQuestion: collectTranscriptQuestion(body, "share"),
   };
 }
 
@@ -467,7 +474,8 @@ async function handleChat(req, res) {
   let images = collectImages(body);
   let nextInterviewerQuestion;
   if (isFollowUp) {
-    const previousQuestion = previousInterviewerQuestions.get(replayKey);
+    const previousQuestion = previousInterviewerQuestions.get(replayKey) ||
+      sessions.get(replayKey)?.metadata?.previousInterviewerQuestion;
     if (!previousQuestion) {
       res.writeHead(409, { "content-type": "application/json" });
       return res.end(JSON.stringify({ error: "Answer a system-audio question first before asking a follow-up." }));
@@ -559,9 +567,7 @@ async function handleChat(req, res) {
     writeUiEvent(res, { type: "text-end", id: "answer" });
     writeUiEvent(res, { type: "finish", finishReason: "stop", messageMetadata: { triggerId, trigger: body?.trigger, outcome: "finished" } });
     if (["ai-help", "auto-ai-help", "follow-up"].includes(body?.trigger?.kind)) {
-      markTranscriptAnswered(body);
-      if (nextInterviewerQuestion === null) previousInterviewerQuestions.delete(replayKey);
-      else if (nextInterviewerQuestion) previousInterviewerQuestions.set(replayKey, nextInterviewerQuestion);
+      markTranscriptAnswered(body, nextInterviewerQuestion);
     }
   } catch (error) {
     console.error(`[local-backend] chat error: ${error.message}`);

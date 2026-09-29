@@ -131,6 +131,8 @@ if (!backendSource.includes('body?.trigger?.kind === "follow-up"') ||
     !backendSource.includes("collectTranscriptQuestion(body, \"share\")") ||
     !backendSource.includes("PREVIOUS INTERVIEWER QUESTION") ||
     !backendSource.includes("NEW FOLLOW-UP QUESTION") ||
+    !backendSource.includes("session.metadata.previousInterviewerQuestion") ||
+    backendSource.includes("groupedQuestion === systemAudioQuestion") ||
     backendSource.includes("PREVIOUS ANSWER")) {
   throw new Error("The system-audio question-only follow-up context is missing.");
 }
