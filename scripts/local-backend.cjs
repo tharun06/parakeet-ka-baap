@@ -401,6 +401,23 @@ function collectTranscriptQuestion(body, sourceType) {
   return questionEntries.map(entry => entry.content).join("\n").trim();
 }
 
+function previousInterviewerQuestion(body) {
+  const callSessionId = String(body?.callSessionId || "");
+  const session = sessions.get(callSessionId);
+  const savedQuestion = previousInterviewerQuestions.get(callSessionId) ||
+    session?.metadata?.previousInterviewerQuestion;
+  if (savedQuestion) return savedQuestion;
+
+  const answeredAt = session?.metadata?.transcriptAnsweredAt;
+  if (!answeredAt) return "";
+  const previousEntries = collectQuestionTranscriptEntries(
+    transcripts.get(callSessionId) || [],
+    body?.pendingTranscriptEntries || [],
+    { boundaryAt: answeredAt, sourceType: "share" },
+  );
+  return previousEntries.at(-1)?.content || "";
+}
+
 function markTranscriptAnswered(body, previousQuestion) {
   const callSessionId = String(body?.callSessionId || "");
   const session = sessions.get(callSessionId);
@@ -474,8 +491,7 @@ async function handleChat(req, res) {
   let images = collectImages(body);
   let nextInterviewerQuestion;
   if (isFollowUp) {
-    const previousQuestion = previousInterviewerQuestions.get(replayKey) ||
-      sessions.get(replayKey)?.metadata?.previousInterviewerQuestion;
+    const previousQuestion = previousInterviewerQuestion(body);
     if (!previousQuestion) {
       res.writeHead(409, { "content-type": "application/json" });
       return res.end(JSON.stringify({ error: "Answer a system-audio question first before asking a follow-up." }));

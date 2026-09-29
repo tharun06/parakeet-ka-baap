@@ -131,6 +131,7 @@ if (!backendSource.includes('body?.trigger?.kind === "follow-up"') ||
     !backendSource.includes("collectTranscriptQuestion(body, \"share\")") ||
     !backendSource.includes("PREVIOUS INTERVIEWER QUESTION") ||
     !backendSource.includes("NEW FOLLOW-UP QUESTION") ||
+    !backendSource.includes("function previousInterviewerQuestion(body)") ||
     !backendSource.includes("session.metadata.previousInterviewerQuestion") ||
     backendSource.includes("groupedQuestion === systemAudioQuestion") ||
     backendSource.includes("PREVIOUS ANSWER")) {
