@@ -420,7 +420,7 @@ function markTranscriptAnswered(body, previousQuestion) {
 function collectQuestion(body) {
   const direct = (body?.trigger?.parts || []).filter(part => part?.type === "text").map(part => part.text).join("\n").trim();
   const groupedQuestion = collectTranscriptQuestion(body);
-  if (direct) return { question: direct, systemAudioQuestion: "" };
+  if (direct) return { question: direct, systemAudioQuestion: direct };
   return {
     question: groupedQuestion
       ? `The transcript lines below are consecutive fragments of the interviewer's current question. Combine them into one complete question, then answer every named concept and every requested part:\n\n${groupedQuestion}`
