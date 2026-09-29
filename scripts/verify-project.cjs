@@ -1,6 +1,6 @@
 const fs = require("node:fs");
 const path = require("node:path");
-const { groupRecentTranscriptEntries } = require("./question-grouping.cjs");
+const { collectQuestionTranscriptEntries } = require("./question-grouping.cjs");
 
 const root = path.resolve(__dirname, "..");
 const requiredFiles = [
@@ -87,7 +87,7 @@ if (!rendererSource.includes('children:"Regenerate"') || !rendererSource.include
   throw new Error("The local Regenerate control is missing.");
 }
 if (!rendererSource.includes('w.default,{callSession:t,combinedTranscript:He') ||
-    !rendererSource.includes('onClear:R,onAnswer:ee,listeningIndicator:I') ||
+    !rendererSource.includes('onClear:R,onAnswer:ee,onRegenerate:te,listeningIndicator:I') ||
     !rendererSource.includes('onClick:ee,className:"font-normal",children:"Answer"') ||
     !rendererSource.includes('onClick:Se,className:"font-normal",children:"Answer"')) {
   throw new Error("The transcript manual Answer controls are missing.");
@@ -116,22 +116,50 @@ if (!backendSource.includes("replayableChatRequests") || !backendSource.includes
 if (!backendSource.includes("sound like a real person speaking naturally in an interview") || !backendSource.includes("Do not use headings, bullet lists, bold labels")) {
   throw new Error("The natural spoken-answer prompt is missing.");
 }
-if (!backendSource.includes("groupRecentTranscriptEntries") ||
+if (!backendSource.includes("collectQuestionTranscriptEntries") ||
+    !backendSource.includes("transcriptAnsweredAt") ||
     !backendSource.includes("answer every named concept and every requested part")) {
-  throw new Error("The multipart transcript question handling is missing.");
+  throw new Error("The click-bounded transcript question handling is missing.");
 }
 
-const groupedQuestion = groupRecentTranscriptEntries([
+const groupedQuestion = collectQuestionTranscriptEntries([
   { id: "old", type: "share", content: "What is Flask?", createdAt: "2026-08-06T15:23:00.000Z" },
   { id: "one", type: "share", content: "What is the difference between fine-tuning", createdAt: "2026-08-06T15:23:22.734Z" },
   { id: "two", type: "share", content: "Prompt engineering", createdAt: "2026-08-06T15:23:25.565Z" },
 ], [
-  { id: "three", type: "share", content: "And RAG", createdAt: "2026-08-06T15:23:26.532Z" },
-  { id: "three", type: "share", content: "And RAG", createdAt: "2026-08-06T15:23:26.532Z" },
-]);
+  { id: "candidate", type: "microphone", content: "My previous answer", createdAt: "2026-08-06T15:23:35.000Z" },
+  { id: "three", type: "share", partialContent: "And RAG", createdAt: "2026-08-06T15:23:40.532Z" },
+  { id: "after", type: "share", content: "Next question", createdAt: "2026-08-06T15:23:42.000Z" },
+], {
+  after: "2026-08-06T15:23:21.000Z",
+  boundaryAt: "2026-08-06T15:23:41.000Z",
+});
 if (groupedQuestion.map(entry => entry.content).join(" | ") !==
     "What is the difference between fine-tuning | Prompt engineering | And RAG") {
-  throw new Error("Multipart transcript grouping does not preserve the complete recent question.");
+  throw new Error("Transcript click boundaries do not preserve the complete current question.");
+}
+if (!rendererSource.includes("[e.content,e.partialContent].filter(Boolean)") ||
+    !rendererSource.includes("transcriptBoundaryAt=(new Date).toISOString()")) {
+  throw new Error("The renderer does not include partial text with an Answer click boundary.");
+}
+if (!rendererSource.includes('children:"Copy Voice"') ||
+    !rendererSource.includes("window.getSelection()?.toString().trim()") ||
+    !rendererSource.includes("window.__parakeetVoiceTranscriptText") ||
+    !rendererSource.includes('ipcRendererProxy.invoke("local/copy-text"') ||
+    rendererSource.includes("navigator.clipboard.writeText") ||
+    !rendererSource.includes("r.length>0?r.map") ||
+    rendererSource.includes("r.slice(-100).map")) {
+  throw new Error("The stable scrolling transcript copy controls are missing.");
+}
+if (!bootstrapSource.includes('ipcMain.handle("local/copy-text"') ||
+    !bootstrapSource.includes("clipboard.writeText")) {
+  throw new Error("The native clipboard IPC handler is missing.");
+}
+if ((rendererSource.match(/children:"Regenerate"/g) || []).length < 3 ||
+    !rendererSource.includes('onRegenerate:()=>ut({kind:"regenerate"') ||
+    !rendererSource.includes("window.__parakeetRegenerateAnswer") ||
+    rendererSource.includes('className:"flex flex-row items-center gap-1 text-sm",children:[I,j]')) {
+  throw new Error("The transcript Regenerate controls or English-selector removal are missing.");
 }
 
 console.log("Recovered app structure and runtime patches are valid.");

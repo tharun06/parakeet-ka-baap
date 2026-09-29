@@ -1,6 +1,6 @@
 const { execFileSync, spawn } = require("node:child_process");
 const path = require("node:path");
-const { app, session } = require("electron");
+const { app, clipboard, ipcMain, session } = require("electron");
 
 let packagedBackend = null;
 
@@ -41,6 +41,11 @@ if (app.isPackaged) {
 }
 
 if (process.env.PARAKEET_LOCAL_ONLY === "1") {
+  ipcMain.handle("local/copy-text", (_event, text) => {
+    clipboard.writeText(String(text ?? ""));
+    return true;
+  });
+
   app.whenReady().then(() => {
     session.defaultSession.webRequest.onBeforeRequest((details, callback) => {
       let allowed = false;

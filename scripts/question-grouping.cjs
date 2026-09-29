@@ -1,7 +1,9 @@
-const QUESTION_FRAGMENT_GAP_MS = 10_000;
-
 function entryText(entry) {
-  return String(entry?.content || entry?.partialContent || "").trim();
+  const content = String(entry?.content || "").trim();
+  const partialContent = String(entry?.partialContent || "").trim();
+  if (!content) return partialContent;
+  if (!partialContent || partialContent === content) return content;
+  return `${content} ${partialContent}`;
 }
 
 function entryTime(entry, fallback) {
@@ -9,7 +11,11 @@ function entryTime(entry, fallback) {
   return Number.isFinite(value) ? value : fallback;
 }
 
-function groupRecentTranscriptEntries(savedEntries = [], pendingEntries = []) {
+function collectQuestionTranscriptEntries(
+  savedEntries = [],
+  pendingEntries = [],
+  { after, boundaryAt } = {},
+) {
   const merged = new Map();
   let order = 0;
 
@@ -25,21 +31,15 @@ function groupRecentTranscriptEntries(savedEntries = [], pendingEntries = []) {
   const entries = [...merged.values()].sort((left, right) =>
     left.createdAtMs - right.createdAtMs || left.order - right.order,
   );
-  if (!entries.length) return [];
-
-  const last = entries.at(-1);
-  const grouped = [last];
-  let laterTime = last.createdAtMs;
-
-  for (let index = entries.length - 2; index >= 0; index -= 1) {
-    const entry = entries[index];
-    if (entry.type !== last.type) break;
-    if (laterTime - entry.createdAtMs > QUESTION_FRAGMENT_GAP_MS) break;
-    grouped.unshift(entry);
-    laterTime = entry.createdAtMs;
-  }
-
-  return grouped.map(({ createdAtMs, order: _order, ...entry }) => entry);
+  const afterMs = entryTime({ createdAt: after }, Number.NEGATIVE_INFINITY);
+  const boundaryMs = entryTime({ createdAt: boundaryAt }, Number.POSITIVE_INFINITY);
+  const entriesWithinClickBoundary = entries.filter(entry =>
+    entry.createdAtMs > afterMs && entry.createdAtMs <= boundaryMs,
+  );
+  const questionSource = entriesWithinClickBoundary.at(-1)?.type;
+  return entriesWithinClickBoundary
+    .filter(entry => entry.type === questionSource)
+    .map(({ createdAtMs, order: _order, ...entry }) => entry);
 }
 
-module.exports = { QUESTION_FRAGMENT_GAP_MS, groupRecentTranscriptEntries };
+module.exports = { collectQuestionTranscriptEntries };

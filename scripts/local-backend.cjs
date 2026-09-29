@@ -5,7 +5,7 @@ const { randomUUID } = require("node:crypto");
 const pdfParse = require("pdf-parse");
 const mammoth = require("mammoth");
 const { WebSocket, WebSocketServer } = require("../app/node_modules/ws");
-const { groupRecentTranscriptEntries } = require("./question-grouping.cjs");
+const { collectQuestionTranscriptEntries } = require("./question-grouping.cjs");
 
 const host = "127.0.0.1";
 const port = Number(process.env.PARAKEET_LOCAL_PORT || 3000);
@@ -385,8 +385,20 @@ function writeUiEvent(res, event) {
 function collectQuestion(body) {
   const direct = (body?.trigger?.parts || []).filter(part => part?.type === "text").map(part => part.text).join("\n").trim();
   if (direct) return direct;
-  const savedEntries = transcripts.get(String(body?.callSessionId || "")) || [];
-  const groupedQuestion = groupRecentTranscriptEntries(savedEntries, body?.pendingTranscriptEntries || [])
+  const callSessionId = String(body?.callSessionId || "");
+  const session = sessions.get(callSessionId);
+  const savedEntries = transcripts.get(callSessionId) || [];
+  const transcriptBoundaryAt = body?.trigger?.transcriptBoundaryAt;
+  const questionEntries = collectQuestionTranscriptEntries(savedEntries, body?.pendingTranscriptEntries || [], {
+    after: session?.metadata?.transcriptAnsweredAt,
+    boundaryAt: transcriptBoundaryAt,
+  });
+  if (["ai-help", "auto-ai-help"].includes(body?.trigger?.kind) && session && transcriptBoundaryAt) {
+    session.metadata = { ...(session.metadata || {}), transcriptAnsweredAt: transcriptBoundaryAt };
+    session.updatedAt = new Date();
+    persistLibrary();
+  }
+  const groupedQuestion = questionEntries
     .map(entry => entry.content)
     .join("\n")
     .trim();
@@ -434,7 +446,7 @@ async function handleChat(req, res) {
   const body = await readBody(req);
   const replayKey = String(body?.callSessionId || "default");
   const isRegeneration = body?.trigger?.kind === "regenerate";
-  let question = collectQuestion(body);
+  let question = isRegeneration ? "" : collectQuestion(body);
   let images = collectImages(body);
   if (isRegeneration) {
     const previous = replayableChatRequests.get(replayKey);
