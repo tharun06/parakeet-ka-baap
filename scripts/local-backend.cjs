@@ -408,6 +408,9 @@ function previousInterviewerQuestion(body) {
     session?.metadata?.previousInterviewerQuestion;
   if (savedQuestion) return savedQuestion;
 
+  const previousRequest = replayableChatRequests.get(callSessionId)?.question;
+  if (previousRequest) return previousRequest;
+
   const answeredAt = session?.metadata?.transcriptAnsweredAt;
   if (!answeredAt) return "";
   const previousEntries = collectQuestionTranscriptEntries(
