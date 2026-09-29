@@ -388,14 +388,14 @@ function writeUiEvent(res, event) {
   res.write(`data: ${JSON.stringify(event)}\n\n`);
 }
 
-function collectTranscriptQuestion(body, sourceType) {
+function collectTranscriptQuestion(body, sourceType, { includeLateEntries = false } = {}) {
   const callSessionId = String(body?.callSessionId || "");
   const session = sessions.get(callSessionId);
   const savedEntries = transcripts.get(callSessionId) || [];
   const transcriptBoundaryAt = body?.trigger?.transcriptBoundaryAt;
   const questionEntries = collectQuestionTranscriptEntries(savedEntries, body?.pendingTranscriptEntries || [], {
     after: session?.metadata?.transcriptAnsweredAt,
-    boundaryAt: transcriptBoundaryAt,
+    boundaryAt: includeLateEntries ? undefined : transcriptBoundaryAt,
     sourceType,
   });
   return questionEntries.map(entry => entry.content).join("\n").trim();
@@ -499,7 +499,7 @@ async function handleChat(req, res) {
       res.writeHead(409, { "content-type": "application/json" });
       return res.end(JSON.stringify({ error: "Answer a system-audio question first before asking a follow-up." }));
     }
-    const currentQuestion = collectTranscriptQuestion(body, "share");
+    const currentQuestion = collectTranscriptQuestion(body, ["share", "combined"], { includeLateEntries: true });
     if (!currentQuestion) {
       res.writeHead(409, { "content-type": "application/json" });
       return res.end(JSON.stringify({ error: "No new system-audio question was detected for this follow-up." }));

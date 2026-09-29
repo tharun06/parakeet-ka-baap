@@ -37,8 +37,9 @@ function collectQuestionTranscriptEntries(
     entry.createdAtMs > afterMs && entry.createdAtMs <= boundaryMs,
   );
   if (sourceType) {
+    const sourceTypes = Array.isArray(sourceType) ? sourceType : [sourceType];
     return entriesWithinClickBoundary
-      .filter(entry => entry.type === sourceType)
+      .filter(entry => sourceTypes.includes(entry.type))
       .map(({ createdAtMs, order: _order, ...entry }) => entry);
   }
   const questionSource = entriesWithinClickBoundary.at(-1)?.type;

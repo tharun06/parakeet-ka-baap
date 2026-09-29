@@ -134,6 +134,7 @@ if (!backendSource.includes('body?.trigger?.kind === "follow-up"') ||
     !backendSource.includes("function previousInterviewerQuestion(body)") ||
     !backendSource.includes("replayableChatRequests.get(callSessionId)?.question") ||
     !backendSource.includes("session.metadata.previousInterviewerQuestion") ||
+    !backendSource.includes('collectTranscriptQuestion(body, ["share", "combined"], { includeLateEntries: true })') ||
     backendSource.includes("groupedQuestion === systemAudioQuestion") ||
     backendSource.includes("PREVIOUS ANSWER")) {
   throw new Error("The system-audio question-only follow-up context is missing.");
@@ -165,6 +166,18 @@ const systemAudioOnly = collectQuestionTranscriptEntries([], [
 });
 if (systemAudioOnly.map(entry => entry.content).join(" | ") !== "Interviewer follow-up") {
   throw new Error("Follow-up question collection must exclude microphone speech.");
+}
+const lateSystemAudioOnly = collectQuestionTranscriptEntries([], [
+  { id: "late-mic", type: "microphone", content: "Candidate speech", createdAt: "2026-08-06T15:23:46.000Z" },
+  { id: "late-share", type: "share", content: "Finalized after click", createdAt: "2026-08-06T15:23:47.000Z" },
+  { id: "combined", type: "combined", content: "Mobile audio question", createdAt: "2026-08-06T15:23:48.000Z" },
+], {
+  after: "2026-08-06T15:23:42.000Z",
+  sourceType: ["share", "combined"],
+});
+if (lateSystemAudioOnly.map(entry => entry.content).join(" | ") !==
+    "Finalized after click | Mobile audio question") {
+  throw new Error("Follow-up must include late-finalized system audio while excluding microphone speech.");
 }
 if (!rendererSource.includes("[e.content,e.partialContent].filter(Boolean)") ||
     !rendererSource.includes("transcriptBoundaryAt=(new Date).toISOString()")) {
