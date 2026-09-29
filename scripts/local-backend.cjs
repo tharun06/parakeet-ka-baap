@@ -9,11 +9,14 @@ const { collectQuestionTranscriptEntries } = require("./question-grouping.cjs");
 
 const host = "127.0.0.1";
 const port = Number(process.env.PARAKEET_LOCAL_PORT || 3000);
+// GPT-5.6 Terra generates chat answers; override the default with OPENAI_ANSWER_MODEL.
 const answerModel = process.env.OPENAI_ANSWER_MODEL || "gpt-5.6-terra";
+// Streaming audio transcription uses a separate realtime model, configurable via OPENAI_TRANSCRIPTION_MODEL.
 const transcriptionModel = process.env.OPENAI_TRANSCRIPTION_MODEL || "gpt-live-transcribe";
 const sessions = new Map();
 const transcripts = new Map();
 const replayableChatRequests = new Map();
+const previousInterviewerQuestions = new Map();
 const localDataDirectory = process.env.PARAKEET_LOCAL_DATA_DIR
   ? path.resolve(process.env.PARAKEET_LOCAL_DATA_DIR)
   : path.resolve(__dirname, "..", "local-data");
@@ -382,9 +385,7 @@ function writeUiEvent(res, event) {
   res.write(`data: ${JSON.stringify(event)}\n\n`);
 }
 
-function collectQuestion(body) {
-  const direct = (body?.trigger?.parts || []).filter(part => part?.type === "text").map(part => part.text).join("\n").trim();
-  if (direct) return direct;
+function collectTranscriptQuestion(body, sourceType) {
   const callSessionId = String(body?.callSessionId || "");
   const session = sessions.get(callSessionId);
   const savedEntries = transcripts.get(callSessionId) || [];
@@ -392,18 +393,33 @@ function collectQuestion(body) {
   const questionEntries = collectQuestionTranscriptEntries(savedEntries, body?.pendingTranscriptEntries || [], {
     after: session?.metadata?.transcriptAnsweredAt,
     boundaryAt: transcriptBoundaryAt,
+    sourceType,
   });
-  if (["ai-help", "auto-ai-help"].includes(body?.trigger?.kind) && session && transcriptBoundaryAt) {
+  return questionEntries.map(entry => entry.content).join("\n").trim();
+}
+
+function markTranscriptAnswered(body) {
+  const callSessionId = String(body?.callSessionId || "");
+  const session = sessions.get(callSessionId);
+  const transcriptBoundaryAt = body?.trigger?.transcriptBoundaryAt;
+  if (["ai-help", "auto-ai-help", "follow-up"].includes(body?.trigger?.kind) && session && transcriptBoundaryAt) {
     session.metadata = { ...(session.metadata || {}), transcriptAnsweredAt: transcriptBoundaryAt };
     session.updatedAt = new Date();
     persistLibrary();
   }
-  const groupedQuestion = questionEntries
-    .map(entry => entry.content)
-    .join("\n")
-    .trim();
-  if (!groupedQuestion) return "";
-  return `The transcript lines below are consecutive fragments of the interviewer's current question. Combine them into one complete question, then answer every named concept and every requested part:\n\n${groupedQuestion}`;
+}
+
+function collectQuestion(body) {
+  const direct = (body?.trigger?.parts || []).filter(part => part?.type === "text").map(part => part.text).join("\n").trim();
+  const groupedQuestion = collectTranscriptQuestion(body);
+  if (direct) return { question: direct, systemAudioQuestion: "" };
+  const systemAudioQuestion = collectTranscriptQuestion(body, "share");
+  return {
+    question: groupedQuestion
+      ? `The transcript lines below are consecutive fragments of the interviewer's current question. Combine them into one complete question, then answer every named concept and every requested part:\n\n${groupedQuestion}`
+      : "",
+    systemAudioQuestion: groupedQuestion === systemAudioQuestion ? systemAudioQuestion : "",
+  };
 }
 
 function collectImages(body) {
@@ -445,10 +461,25 @@ function collectSessionContext(body) {
 async function handleChat(req, res) {
   const body = await readBody(req);
   const replayKey = String(body?.callSessionId || "default");
+  const isFollowUp = body?.trigger?.kind === "follow-up";
   const isRegeneration = body?.trigger?.kind === "regenerate";
-  let question = isRegeneration ? "" : collectQuestion(body);
+  let question = "";
   let images = collectImages(body);
-  if (isRegeneration) {
+  let nextInterviewerQuestion;
+  if (isFollowUp) {
+    const previousQuestion = previousInterviewerQuestions.get(replayKey);
+    if (!previousQuestion) {
+      res.writeHead(409, { "content-type": "application/json" });
+      return res.end(JSON.stringify({ error: "Answer a system-audio question first before asking a follow-up." }));
+    }
+    const currentQuestion = collectTranscriptQuestion(body, "share");
+    if (!currentQuestion) {
+      res.writeHead(409, { "content-type": "application/json" });
+      return res.end(JSON.stringify({ error: "No new system-audio question was detected for this follow-up." }));
+    }
+    question = `FOLLOW-UP REQUEST\nAnswer the new interviewer question as a continuation of the prior question. Do not answer the prior question again. Only the interviewer questions are provided; no prior answer is included.\n\nPREVIOUS INTERVIEWER QUESTION\n${previousQuestion}\n\nNEW FOLLOW-UP QUESTION\n${currentQuestion}`;
+    nextInterviewerQuestion = currentQuestion;
+  } else if (isRegeneration) {
     const previous = replayableChatRequests.get(replayKey);
     if (!previous) {
       res.writeHead(409, { "content-type": "application/json" });
@@ -456,7 +487,14 @@ async function handleChat(req, res) {
     }
     question = previous.question;
     images = [...previous.images];
-  } else if (question || images.length) {
+  } else {
+    const collected = collectQuestion(body);
+    question = collected.question;
+    if (["ai-help", "auto-ai-help"].includes(body?.trigger?.kind)) {
+      nextInterviewerQuestion = collected.systemAudioQuestion || null;
+    }
+  }
+  if (!isRegeneration && (question || images.length)) {
     replayableChatRequests.set(replayKey, { question, images: [...images] });
   }
   const sessionContext = collectSessionContext(body);
@@ -520,6 +558,11 @@ async function handleChat(req, res) {
     }
     writeUiEvent(res, { type: "text-end", id: "answer" });
     writeUiEvent(res, { type: "finish", finishReason: "stop", messageMetadata: { triggerId, trigger: body?.trigger, outcome: "finished" } });
+    if (["ai-help", "auto-ai-help", "follow-up"].includes(body?.trigger?.kind)) {
+      markTranscriptAnswered(body);
+      if (nextInterviewerQuestion === null) previousInterviewerQuestions.delete(replayKey);
+      else if (nextInterviewerQuestion) previousInterviewerQuestions.set(replayKey, nextInterviewerQuestion);
+    }
   } catch (error) {
     console.error(`[local-backend] chat error: ${error.message}`);
     writeUiEvent(res, { type: "error", errorText: error.message });

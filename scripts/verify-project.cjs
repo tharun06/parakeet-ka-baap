@@ -86,8 +86,13 @@ if (rendererSource.includes('ut({kind:"analyze-screen",triggeredUsingShortcut:e,
 if (!rendererSource.includes('children:"Regenerate"') || !rendererSource.includes('kind:"regenerate"')) {
   throw new Error("The local Regenerate control is missing.");
 }
+if ((rendererSource.match(/children:"Follow-up"/g) || []).length < 3 ||
+    !rendererSource.includes('kind:"follow-up"') ||
+    !rendererSource.includes("window.__parakeetFollowUpAnswer")) {
+  throw new Error("The Follow-up controls are missing.");
+}
 if (!rendererSource.includes('w.default,{callSession:t,combinedTranscript:He') ||
-    !rendererSource.includes('onClear:R,onAnswer:ee,onRegenerate:te,listeningIndicator:I') ||
+    !rendererSource.includes('onClear:R,onAnswer:ee,onRegenerate:te,onFollowUp:fe,listeningIndicator:I') ||
     !rendererSource.includes('onClick:ee,className:"font-normal",children:"Answer"') ||
     !rendererSource.includes('onClick:Se,className:"font-normal",children:"Answer"')) {
   throw new Error("The transcript manual Answer controls are missing.");
@@ -121,6 +126,14 @@ if (!backendSource.includes("collectQuestionTranscriptEntries") ||
     !backendSource.includes("answer every named concept and every requested part")) {
   throw new Error("The click-bounded transcript question handling is missing.");
 }
+if (!backendSource.includes('body?.trigger?.kind === "follow-up"') ||
+    !backendSource.includes("previousInterviewerQuestions") ||
+    !backendSource.includes("collectTranscriptQuestion(body, \"share\")") ||
+    !backendSource.includes("PREVIOUS INTERVIEWER QUESTION") ||
+    !backendSource.includes("NEW FOLLOW-UP QUESTION") ||
+    backendSource.includes("PREVIOUS ANSWER")) {
+  throw new Error("The system-audio question-only follow-up context is missing.");
+}
 
 const groupedQuestion = collectQuestionTranscriptEntries([
   { id: "old", type: "share", content: "What is Flask?", createdAt: "2026-08-06T15:23:00.000Z" },
@@ -137,6 +150,17 @@ const groupedQuestion = collectQuestionTranscriptEntries([
 if (groupedQuestion.map(entry => entry.content).join(" | ") !==
     "What is the difference between fine-tuning | Prompt engineering | And RAG") {
   throw new Error("Transcript click boundaries do not preserve the complete current question.");
+}
+const systemAudioOnly = collectQuestionTranscriptEntries([], [
+  { id: "microphone", type: "microphone", content: "Candidate speech", createdAt: "2026-08-06T15:23:43.000Z" },
+  { id: "system-audio", type: "share", content: "Interviewer follow-up", createdAt: "2026-08-06T15:23:44.000Z" },
+], {
+  after: "2026-08-06T15:23:42.000Z",
+  boundaryAt: "2026-08-06T15:23:45.000Z",
+  sourceType: "share",
+});
+if (systemAudioOnly.map(entry => entry.content).join(" | ") !== "Interviewer follow-up") {
+  throw new Error("Follow-up question collection must exclude microphone speech.");
 }
 if (!rendererSource.includes("[e.content,e.partialContent].filter(Boolean)") ||
     !rendererSource.includes("transcriptBoundaryAt=(new Date).toISOString()")) {

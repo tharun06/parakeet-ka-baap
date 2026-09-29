@@ -185,9 +185,13 @@ if (rendererSource.includes(answerOnlyShortcutEffect)) {
 }
 const answerAndScreenshotButtons = '(0,l.jsx)(f.default,{disabled:"ai-help"===je,shortcut:(0,l.jsx)(B.Shortcut,{noPlus:!0,shortcuts:[B.ShortcutKey,u.CornerDownLeft]}),onClick:()=>ut({kind:"ai-help",triggeredUsingShortcut:!1}),children:"Answer"}),(0,l.jsx)(f.default,{disabled:"analyze-screen"===je,shortcut:';
 const answerRegenerateAndScreenshotButtons = '(0,l.jsx)(f.default,{disabled:"ai-help"===je,shortcut:(0,l.jsx)(B.Shortcut,{noPlus:!0,shortcuts:[B.ShortcutKey,u.CornerDownLeft]}),onClick:()=>ut({kind:"ai-help",triggeredUsingShortcut:!1}),children:"Answer"}),(0,l.jsx)(f.default,{disabled:"regenerate"===je||0===Me.length,shortcut:(0,l.jsx)(B.Shortcut,{noPlus:!0,shortcuts:[B.ShortcutKey,"R"]}),onClick:()=>ut({kind:"regenerate",triggeredUsingShortcut:!1}),children:"Regenerate"}),(0,l.jsx)(f.default,{disabled:"analyze-screen"===je,shortcut:';
+const answerFollowUpRegenerateAndScreenshotButtons = '(0,l.jsx)(f.default,{disabled:"ai-help"===je,shortcut:(0,l.jsx)(B.Shortcut,{noPlus:!0,shortcuts:[B.ShortcutKey,u.CornerDownLeft]}),onClick:()=>ut({kind:"ai-help",triggeredUsingShortcut:!1}),children:"Answer"}),(0,l.jsx)(f.default,{disabled:"follow-up"===je,onClick:()=>ut({kind:"follow-up",triggeredUsingShortcut:!1}),children:"Follow-up"}),(0,l.jsx)(f.default,{disabled:"regenerate"===je||0===Me.length,shortcut:(0,l.jsx)(B.Shortcut,{noPlus:!0,shortcuts:[B.ShortcutKey,"R"]}),onClick:()=>ut({kind:"regenerate",triggeredUsingShortcut:!1}),children:"Regenerate"}),(0,l.jsx)(f.default,{disabled:"analyze-screen"===je,shortcut:';
 if (rendererSource.includes(answerAndScreenshotButtons)) {
   rendererSource = rendererSource.replace(answerAndScreenshotButtons, answerRegenerateAndScreenshotButtons);
-} else if (!rendererSource.includes(answerRegenerateAndScreenshotButtons)) {
+}
+if (rendererSource.includes(answerRegenerateAndScreenshotButtons)) {
+  rendererSource = rendererSource.replace(answerRegenerateAndScreenshotButtons, answerFollowUpRegenerateAndScreenshotButtons);
+} else if (!rendererSource.includes(answerFollowUpRegenerateAndScreenshotButtons)) {
   throw new Error("Could not add the Regenerate button");
 }
 const immediateAutoAnswer = 'X.current=e=>{R?.autoAnswer&&!e&&se.generateAiResponse({kind:"auto-ai-help"})}';
@@ -221,7 +225,8 @@ if (rendererSource.includes(expandedTranscriptStart)) {
   rendererSource = rendererSource.replace(expandedTranscriptStart, expandedTranscriptWithAnswerStart);
 } else if (!rendererSource.includes(expandedTranscriptWithAnswerStart) &&
     !rendererSource.includes('onClear:R,onAnswer:ee,listeningIndicator:I}=e;window.__parakeetVoiceTranscriptText=') &&
-    !rendererSource.includes('onClear:R,onAnswer:ee,onRegenerate:te,listeningIndicator:I}=e;window.__parakeetRegenerateAnswer=')) {
+    !rendererSource.includes('onClear:R,onAnswer:ee,onRegenerate:te,listeningIndicator:I}=e;window.__parakeetRegenerateAnswer=') &&
+    !rendererSource.includes('onClear:R,onAnswer:ee,onRegenerate:te,onFollowUp:fe,listeningIndicator:I}=e;window.__parakeetFollowUpAnswer=')) {
   throw new Error("Could not expose a manual Answer action in the expanded transcript");
 }
 const expandedTranscriptTail = 't[24]!==H||t[25]!==z?(Y=(0,i.jsxs)("div",{"data-transparent":"true",className:"flex flex-row items-center gap-1",children:[z,H]}),t[24]=H,t[25]=z,t[26]=Y):Y=t[26],t[27]!==Y||t[28]!==U?($=(0,i.jsxs)("div",{"data-transparent":"true",className:"flex flex-row items-center justify-between",children:[U,Y]}),t[27]=Y,t[28]=U,t[29]=$):$=t[29],t[30]!==r.length?(W=r.length>100&&(0,i.jsx)("div",{className:"text-center text-sm text-neutral-500",children:"Showing the last 100 transcript items."}),t[30]=r.length,t[31]=W):W=t[31],t[32]!==r||t[33]!==k||t[34]!==A||t[35]!==l||t[36]!==C?(Q=r.length>0?r.slice(-100).map((e,t,n)=>(0,i.jsx)(T,{item:e,index:t,isMicrophoneTranscribing:l,isShareTranscribing:C,hasShareFinal:A,hasMicrophoneFinal:k,announceDetection:t===n.findLastIndex(b)},e.createdAt.getTime()+"-"+t)):C||l?(0,i.jsx)("span",{className:"text-sm text-neutral-500",children:"Listening..."}):(0,i.jsx)("span",{className:"text-sm text-neutral-500",children:"Transcription is turned off."}),t[32]=r,t[33]=k,t[34]=A,t[35]=l,t[36]=C,t[37]=Q):Q=t[37],t[38]!==W||t[39]!==Q?(K=(0,i.jsxs)(h.StickToBottom.Content,{className:"flex flex-col px-2 py-1",scrollClassName:"h-full overflow-y-scroll",children:[W,Q]}),t[38]=W,t[39]=Q,t[40]=K):K=t[40],t[41]===Symbol.for("react.memo_cache_sentinel")?(Z=(0,i.jsx)(E,{}),t[41]=Z):Z=t[41],t[42]!==K?(X=(0,i.jsx)(m.default,{className:"relative flex flex-1 overflow-hidden",children:(0,i.jsxs)(h.StickToBottom,{className:"relative flex-1 overflow-hidden",resize:"smooth",initial:"smooth",children:[K,Z]})}),t[42]=K,t[43]=X):X=t[43],t[44]!==$||t[45]!==X?(J=(0,i.jsxs)(f.default,{className:"flex max-h-[400px] w-[400px] min-w-[400px] flex-col gap-1 overflow-y-hidden",children:[$,X]}),t[44]=$,t[45]=X,t[46]=J):J=t[46]';
@@ -237,7 +242,8 @@ const expandedTranscriptUsageWithAnswer = '!Z&&k&&(0,l.jsx)(w.default,{callSessi
 if (rendererSource.includes(expandedTranscriptUsage)) {
   rendererSource = rendererSource.replace(expandedTranscriptUsage, expandedTranscriptUsageWithAnswer);
 } else if (!rendererSource.includes(expandedTranscriptUsageWithAnswer) &&
-    !rendererSource.includes('onAnswer:()=>ut({kind:"ai-help",triggeredUsingShortcut:!1}),onRegenerate:()=>ut({kind:"regenerate",triggeredUsingShortcut:!1})')) {
+    !rendererSource.includes('onAnswer:()=>ut({kind:"ai-help",triggeredUsingShortcut:!1}),onRegenerate:()=>ut({kind:"regenerate",triggeredUsingShortcut:!1})') &&
+    !rendererSource.includes('onAnswer:()=>ut({kind:"ai-help",triggeredUsingShortcut:!1}),onRegenerate:()=>ut({kind:"regenerate",triggeredUsingShortcut:!1}),onFollowUp:()=>ut({kind:"follow-up",triggeredUsingShortcut:!1})')) {
   throw new Error("Could not connect the expanded transcript Answer button");
 }
 const compactTranscriptStart = '},46866(e,t,n){"use strict";var r=this&&this.__importDefault||function(e){return e&&e.__esModule?e:{default:e}};Object.defineProperty(t,"__esModule",{value:!0}),t.default=function(e){const t=(0,o.c)(26),{combinedTranscript:n,isMicrophoneTranscribing:r,isShareTranscribing:g,width:_,listeningIndicator:v,onUnMinimize:b,onClear:y}=e;';
@@ -246,7 +252,8 @@ if (rendererSource.includes(compactTranscriptStart)) {
   rendererSource = rendererSource.replace(compactTranscriptStart, compactTranscriptWithAnswerStart);
 } else if (!rendererSource.includes(compactTranscriptWithAnswerStart) &&
     !rendererSource.includes('onClear:y,onAnswer:Se}=e;window.__parakeetVoiceTranscriptText=') &&
-    !rendererSource.includes('onClear:y,onAnswer:Se,onRegenerate:Ee}=e;window.__parakeetRegenerateAnswer=')) {
+    !rendererSource.includes('onClear:y,onAnswer:Se,onRegenerate:Ee}=e;window.__parakeetRegenerateAnswer=') &&
+    !rendererSource.includes('onClear:y,onAnswer:Se,onRegenerate:Ee,onFollowUp:Fe}=e;window.__parakeetFollowUpAnswer=')) {
   throw new Error("Could not expose a manual Answer action in the compact transcript");
 }
 const compactTranscriptControls = 't[18]!==N||t[19]!==w?(A=(0,i.jsxs)("div",{"data-transparent":"true",className:"flex h-full flex-row items-center gap-1",children:[C,w,N]}),t[18]=N,t[19]=w,t[20]=A):A=t[20],t[21]!==S||t[22]!==A||t[23]!==E||t[24]!==T?(k=(0,i.jsxs)(f.default,{className:"flex flex-row items-center justify-between gap-1 transition-[width] duration-200 ease-out motion-reduce:transition-none",style:S,children:[E,T,A]}),t[21]=S,t[22]=A,t[23]=E,t[24]=T,t[25]=k):k=t[25]';
@@ -265,7 +272,8 @@ const compactTranscriptUsageWithAnswer = 'Z&&k&&(0,l.jsx)(L.default,{combinedTra
 if (rendererSource.includes(compactTranscriptUsage)) {
   rendererSource = rendererSource.replace(compactTranscriptUsage, compactTranscriptUsageWithAnswer);
 } else if (!rendererSource.includes(compactTranscriptUsageWithAnswer) &&
-    !rendererSource.includes('onAnswer:()=>ut({kind:"ai-help",triggeredUsingShortcut:!1}),onRegenerate:()=>ut({kind:"regenerate",triggeredUsingShortcut:!1})')) {
+    !rendererSource.includes('onAnswer:()=>ut({kind:"ai-help",triggeredUsingShortcut:!1}),onRegenerate:()=>ut({kind:"regenerate",triggeredUsingShortcut:!1})') &&
+    !rendererSource.includes('onAnswer:()=>ut({kind:"ai-help",triggeredUsingShortcut:!1}),onRegenerate:()=>ut({kind:"regenerate",triggeredUsingShortcut:!1}),onFollowUp:()=>ut({kind:"follow-up",triggeredUsingShortcut:!1})')) {
   throw new Error("Could not connect the compact transcript Answer button");
 }
 const expandedTranscriptWithoutCopyState = 'onClear:R,onAnswer:ee,listeningIndicator:I}=e,{getLanguageLabel:N}=(0,g.default)(),A=Boolean(r.find(S)?.content.length),k=Boolean(r.find(y)?.content.length),M=n.language;let';
@@ -273,7 +281,8 @@ const expandedTranscriptWithCopyState = 'onClear:R,onAnswer:ee,listeningIndicato
 if (rendererSource.includes(expandedTranscriptWithoutCopyState)) {
   rendererSource = rendererSource.replace(expandedTranscriptWithoutCopyState, expandedTranscriptWithCopyState);
 } else if (!rendererSource.includes(expandedTranscriptWithCopyState) &&
-    !rendererSource.includes('onClear:R,onAnswer:ee,onRegenerate:te,listeningIndicator:I}=e;window.__parakeetRegenerateAnswer=')) {
+    !rendererSource.includes('onClear:R,onAnswer:ee,onRegenerate:te,listeningIndicator:I}=e;window.__parakeetRegenerateAnswer=') &&
+    !rendererSource.includes('onClear:R,onAnswer:ee,onRegenerate:te,onFollowUp:fe,listeningIndicator:I}=e;window.__parakeetFollowUpAnswer=')) {
   throw new Error("Could not expose the expanded voice transcript to the copy action");
 }
 const compactTranscriptWithoutCopyState = 'onClear:y,onAnswer:Se}=e;let S,E,T,C,x,w,O,R,I,N,A,k;';
@@ -281,7 +290,8 @@ const compactTranscriptWithCopyState = 'onClear:y,onAnswer:Se}=e;window.__parake
 if (rendererSource.includes(compactTranscriptWithoutCopyState)) {
   rendererSource = rendererSource.replace(compactTranscriptWithoutCopyState, compactTranscriptWithCopyState);
 } else if (!rendererSource.includes(compactTranscriptWithCopyState) &&
-    !rendererSource.includes('onClear:y,onAnswer:Se,onRegenerate:Ee}=e;window.__parakeetRegenerateAnswer=')) {
+    !rendererSource.includes('onClear:y,onAnswer:Se,onRegenerate:Ee}=e;window.__parakeetRegenerateAnswer=') &&
+    !rendererSource.includes('onClear:y,onAnswer:Se,onRegenerate:Ee,onFollowUp:Fe}=e;window.__parakeetFollowUpAnswer=')) {
   throw new Error("Could not expose the compact voice transcript to the copy action");
 }
 const copyVoiceButtonExpanded = '(0,i.jsx)(p.default,{transparent:!0,onMouseDown:e=>e.preventDefault(),onClick:()=>{const e=window.getSelection()?.toString().trim();navigator.clipboard.writeText(e||window.__parakeetVoiceTranscriptText||"")},className:"font-normal",children:"Copy Voice"})';
@@ -331,42 +341,66 @@ if (rendererSource.includes("r.length>0?r.slice(-100).map")) {
 }
 const expandedCopyStateWithoutRegenerate = 'onClear:R,onAnswer:ee,listeningIndicator:I}=e;window.__parakeetVoiceTranscriptText=';
 const expandedCopyStateWithRegenerate = 'onClear:R,onAnswer:ee,onRegenerate:te,listeningIndicator:I}=e;window.__parakeetRegenerateAnswer=te,window.__parakeetVoiceTranscriptText=';
+const expandedCopyStateWithFollowUp = 'onClear:R,onAnswer:ee,onRegenerate:te,onFollowUp:fe,listeningIndicator:I}=e;window.__parakeetFollowUpAnswer=fe,window.__parakeetRegenerateAnswer=te,window.__parakeetVoiceTranscriptText=';
 if (rendererSource.includes(expandedCopyStateWithoutRegenerate)) {
-  rendererSource = rendererSource.replace(expandedCopyStateWithoutRegenerate, expandedCopyStateWithRegenerate);
-} else if (!rendererSource.includes(expandedCopyStateWithRegenerate)) {
+  rendererSource = rendererSource.replace(expandedCopyStateWithoutRegenerate, expandedCopyStateWithFollowUp);
+} else if (rendererSource.includes(expandedCopyStateWithRegenerate)) {
+  rendererSource = rendererSource.replace(expandedCopyStateWithRegenerate, expandedCopyStateWithFollowUp);
+} else if (!rendererSource.includes(expandedCopyStateWithFollowUp)) {
   throw new Error("Could not expose Regenerate in the expanded transcript");
 }
 const compactCopyStateWithoutRegenerate = 'onClear:y,onAnswer:Se}=e;window.__parakeetVoiceTranscriptText=';
 const compactCopyStateWithRegenerate = 'onClear:y,onAnswer:Se,onRegenerate:Ee}=e;window.__parakeetRegenerateAnswer=Ee,window.__parakeetVoiceTranscriptText=';
+const compactCopyStateWithFollowUp = 'onClear:y,onAnswer:Se,onRegenerate:Ee,onFollowUp:Fe}=e;window.__parakeetFollowUpAnswer=Fe,window.__parakeetRegenerateAnswer=Ee,window.__parakeetVoiceTranscriptText=';
 if (rendererSource.includes(compactCopyStateWithoutRegenerate)) {
-  rendererSource = rendererSource.replace(compactCopyStateWithoutRegenerate, compactCopyStateWithRegenerate);
-} else if (!rendererSource.includes(compactCopyStateWithRegenerate)) {
+  rendererSource = rendererSource.replace(compactCopyStateWithoutRegenerate, compactCopyStateWithFollowUp);
+} else if (rendererSource.includes(compactCopyStateWithRegenerate)) {
+  rendererSource = rendererSource.replace(compactCopyStateWithRegenerate, compactCopyStateWithFollowUp);
+} else if (!rendererSource.includes(compactCopyStateWithFollowUp)) {
   throw new Error("Could not expose Regenerate in the compact transcript");
 }
 const expandedUsageWithRegenerate = '!Z&&k&&(0,l.jsx)(w.default,{callSession:t,combinedTranscript:He,isMicrophoneTranscribing:we,isShareTranscribing:be,listeningIndicator:Lt,onLanguageChange:Qe,isUpdatingLanguage:Ze,onMinimize:()=>ee(!0),onClear:Ye,onAnswer:()=>ut({kind:"ai-help",triggeredUsingShortcut:!1}),onRegenerate:()=>ut({kind:"regenerate",triggeredUsingShortcut:!1})})';
+const expandedUsageWithFollowUp = '!Z&&k&&(0,l.jsx)(w.default,{callSession:t,combinedTranscript:He,isMicrophoneTranscribing:we,isShareTranscribing:be,listeningIndicator:Lt,onLanguageChange:Qe,isUpdatingLanguage:Ze,onMinimize:()=>ee(!0),onClear:Ye,onAnswer:()=>ut({kind:"ai-help",triggeredUsingShortcut:!1}),onRegenerate:()=>ut({kind:"regenerate",triggeredUsingShortcut:!1}),onFollowUp:()=>ut({kind:"follow-up",triggeredUsingShortcut:!1})})';
 if (rendererSource.includes(expandedTranscriptUsageWithAnswer)) {
   rendererSource = rendererSource.replace(expandedTranscriptUsageWithAnswer, expandedUsageWithRegenerate);
-} else if (!rendererSource.includes(expandedUsageWithRegenerate)) {
+}
+if (rendererSource.includes(expandedUsageWithRegenerate)) {
+  rendererSource = rendererSource.replace(expandedUsageWithRegenerate, expandedUsageWithFollowUp);
+} else if (!rendererSource.includes(expandedUsageWithFollowUp)) {
   throw new Error("Could not connect expanded Regenerate to the previous answer");
 }
 const compactUsageWithRegenerate = 'Z&&k&&(0,l.jsx)(L.default,{combinedTranscript:He,isMicrophoneTranscribing:we,isShareTranscribing:be,width:At??void 0,listeningIndicator:Lt,onUnMinimize:()=>ee(!1),onClear:Ye,onAnswer:()=>ut({kind:"ai-help",triggeredUsingShortcut:!1}),onRegenerate:()=>ut({kind:"regenerate",triggeredUsingShortcut:!1})})';
+const compactUsageWithFollowUp = 'Z&&k&&(0,l.jsx)(L.default,{combinedTranscript:He,isMicrophoneTranscribing:we,isShareTranscribing:be,width:At??void 0,listeningIndicator:Lt,onUnMinimize:()=>ee(!1),onClear:Ye,onAnswer:()=>ut({kind:"ai-help",triggeredUsingShortcut:!1}),onRegenerate:()=>ut({kind:"regenerate",triggeredUsingShortcut:!1}),onFollowUp:()=>ut({kind:"follow-up",triggeredUsingShortcut:!1})})';
 if (rendererSource.includes(compactTranscriptUsageWithAnswer)) {
   rendererSource = rendererSource.replace(compactTranscriptUsageWithAnswer, compactUsageWithRegenerate);
-} else if (!rendererSource.includes(compactUsageWithRegenerate)) {
+}
+if (rendererSource.includes(compactUsageWithRegenerate)) {
+  rendererSource = rendererSource.replace(compactUsageWithRegenerate, compactUsageWithFollowUp);
+} else if (!rendererSource.includes(compactUsageWithFollowUp)) {
   throw new Error("Could not connect compact Regenerate to the previous answer");
 }
 const regenerateButtonExpanded = '(0,i.jsx)(p.default,{transparent:!0,onClick:()=>window.__parakeetRegenerateAnswer?.(),className:"font-normal",children:"Regenerate"})';
 const expandedControlsWithRegenerate = `children:[${nativeCopyVoiceButtonExpanded},z,(0,i.jsx)(p.default,{transparent:!0,onClick:ee,className:"font-normal",children:"Answer"}),${regenerateButtonExpanded},H]`;
+const followUpButtonExpanded = '(0,i.jsx)(p.default,{transparent:!0,onClick:()=>window.__parakeetFollowUpAnswer?.(),className:"font-normal",children:"Follow-up"})';
+const expandedControlsWithFollowUpAndRegenerate = `children:[${nativeCopyVoiceButtonExpanded},z,(0,i.jsx)(p.default,{transparent:!0,onClick:ee,className:"font-normal",children:"Answer"}),${followUpButtonExpanded},${regenerateButtonExpanded},H]`;
 if (rendererSource.includes(expandedControlsWithNativeCopy)) {
   rendererSource = rendererSource.replace(expandedControlsWithNativeCopy, expandedControlsWithRegenerate);
-} else if (!rendererSource.includes(expandedControlsWithRegenerate)) {
+}
+if (rendererSource.includes(expandedControlsWithRegenerate)) {
+  rendererSource = rendererSource.replace(expandedControlsWithRegenerate, expandedControlsWithFollowUpAndRegenerate);
+} else if (!rendererSource.includes(expandedControlsWithFollowUpAndRegenerate)) {
   throw new Error("Could not add the expanded Regenerate button");
 }
 const regenerateButtonCompact = '(0,i.jsx)(u.default,{transparent:!0,onClick:()=>window.__parakeetRegenerateAnswer?.(),className:"font-normal",children:"Regenerate"})';
 const compactControlsWithRegenerate = `children:[C,${nativeCopyVoiceButtonCompact},w,(0,i.jsx)(u.default,{transparent:!0,onClick:Se,className:"font-normal",children:"Answer"}),${regenerateButtonCompact},N]`;
+const followUpButtonCompact = '(0,i.jsx)(u.default,{transparent:!0,onClick:()=>window.__parakeetFollowUpAnswer?.(),className:"font-normal",children:"Follow-up"})';
+const compactControlsWithFollowUpAndRegenerate = `children:[C,${nativeCopyVoiceButtonCompact},w,(0,i.jsx)(u.default,{transparent:!0,onClick:Se,className:"font-normal",children:"Answer"}),${followUpButtonCompact},${regenerateButtonCompact},N]`;
 if (rendererSource.includes(compactControlsWithNativeCopy)) {
   rendererSource = rendererSource.replace(compactControlsWithNativeCopy, compactControlsWithRegenerate);
-} else if (!rendererSource.includes(compactControlsWithRegenerate)) {
+}
+if (rendererSource.includes(compactControlsWithRegenerate)) {
+  rendererSource = rendererSource.replace(compactControlsWithRegenerate, compactControlsWithFollowUpAndRegenerate);
+} else if (!rendererSource.includes(compactControlsWithFollowUpAndRegenerate)) {
   throw new Error("Could not add the compact Regenerate button");
 }
 const expandedLanguageSelector = 'className:"flex flex-row items-center gap-1 text-sm",children:[I,j]';

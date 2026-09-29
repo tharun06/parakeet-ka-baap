@@ -14,7 +14,7 @@ function entryTime(entry, fallback) {
 function collectQuestionTranscriptEntries(
   savedEntries = [],
   pendingEntries = [],
-  { after, boundaryAt } = {},
+  { after, boundaryAt, sourceType } = {},
 ) {
   const merged = new Map();
   let order = 0;
@@ -36,6 +36,11 @@ function collectQuestionTranscriptEntries(
   const entriesWithinClickBoundary = entries.filter(entry =>
     entry.createdAtMs > afterMs && entry.createdAtMs <= boundaryMs,
   );
+  if (sourceType) {
+    return entriesWithinClickBoundary
+      .filter(entry => entry.type === sourceType)
+      .map(({ createdAtMs, order: _order, ...entry }) => entry);
+  }
   const questionSource = entriesWithinClickBoundary.at(-1)?.type;
   return entriesWithinClickBoundary
     .filter(entry => entry.type === questionSource)

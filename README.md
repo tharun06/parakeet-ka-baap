@@ -116,6 +116,12 @@ If an answer is not satisfactory, click **Regenerate** or press **Ctrl+R**
 same transcript text and attached screenshots. **Ctrl+Enter** remains the
 **Answer** shortcut for a newly spoken question.
 
+After answering a system-audio question, click **Follow-up** for the next
+interviewer question. For continuity, it sends the previous and new
+system-audio questions, but not prior spoken or generated answers; configured
+candidate context is still included as usual. The complete transcript remains
+saved locally. Click **Answer** to start a fresh question instead.
+
 Non-coding answers are prompted as natural spoken interview responses: direct,
 simple conversational English in one or two short paragraphs. Technical terms
 and product names are preserved and explained plainly, while essay-style
